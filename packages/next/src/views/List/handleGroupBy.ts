@@ -5,6 +5,7 @@ import type {
   PaginatedDocs,
   PayloadRequest,
   SanitizedCollectionConfig,
+  SelectType,
   ViewTypes,
   Where,
 } from 'payload'
@@ -23,6 +24,7 @@ export const handleGroupBy = async ({
   enableRowSelections,
   query,
   req,
+  select,
   trash = false,
   user,
   viewType,
@@ -37,6 +39,7 @@ export const handleGroupBy = async ({
   enableRowSelections?: boolean
   query?: ListQuery
   req: PayloadRequest
+  select?: SelectType
   trash?: boolean
   user: any
   viewType?: ViewTypes
@@ -130,6 +133,7 @@ export const handleGroupBy = async ({
           ? Number(query.queryByGroup[valueOrRelationshipID].page)
           : undefined,
         req,
+        select,
         // Note: if we wanted to enable table-by-table sorting, we could use this:
         // sort: query?.queryByGroup?.[valueOrRelationshipID]?.sort,
         sort: query?.sort,

@@ -1,6 +1,7 @@
 import { DefaultListView, HydrateAuthProvider, ListQueryProvider } from '@payloadcms/ui'
 import { RenderServerComponent } from '@payloadcms/ui/elements/RenderServerComponent'
 import { renderFilters, renderTable, upsertPreferences } from '@payloadcms/ui/rsc'
+import { filterFields, getInitialColumns } from '@payloadcms/ui/shared'
 import { notFound } from 'next/navigation.js'
 import {
   type AdminViewServerProps,
@@ -13,6 +14,7 @@ import {
   type PaginatedDocs,
   type QueryPreset,
   type SanitizedCollectionPermission,
+  type SelectType,
 } from 'payload'
 import {
   combineWhereConstraints,
@@ -208,6 +210,20 @@ export const renderListView = async (
       totalPages: 0,
     }
 
+    const clientCollectionConfig = clientConfig.collections.find((c) => c.slug === collectionSlug)
+    const clientTableColumns =
+      collectionPreferences?.columns ||
+      getInitialColumns(
+        filterFields(clientCollectionConfig.fields),
+        clientCollectionConfig.admin.useAsTitle,
+        clientCollectionConfig.admin.defaultColumns,
+      )
+    const select: SelectType = clientTableColumns
+      .filter((c) => c.active)
+      .reduce((acc, value) => {
+        acc[value.accessor] = true
+        return acc
+      }, {})
     try {
       if (collectionConfig.admin.groupBy && query.groupBy) {
         ;({ columnState, data, Table } = await handleGroupBy({
@@ -220,6 +236,7 @@ export const renderListView = async (
           enableRowSelections,
           query,
           req,
+          select,
           trash,
           user,
           viewType,
@@ -237,13 +254,14 @@ export const renderListView = async (
           overrideAccess: false,
           page: query?.page ? Number(query.page) : undefined,
           req,
+          select,
           sort: query?.sort,
           trash,
           user,
           where: whereWithMergedSearch,
         })
         ;({ columnState, Table } = renderTable({
-          clientCollectionConfig: clientConfig.collections.find((c) => c.slug === collectionSlug),
+          clientCollectionConfig,
           collectionConfig,
           columns: collectionPreferences?.columns,
           customCellProps,
